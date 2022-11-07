@@ -1,0 +1,15 @@
+data processing
+- convert to correct data types
+
+purpose
+- investigate relationships between amounts of various nutrients
+
+3 new vars
+- 
+
+function
+- create plot
+- 
+
+for loop
+- 

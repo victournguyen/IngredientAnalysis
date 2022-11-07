@@ -1,0 +1,10 @@
+---
+title: "Ingredient Analysis"
+author: "Victor Nguyen"
+date: "2022-11-07"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
