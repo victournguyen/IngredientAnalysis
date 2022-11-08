@@ -1,10 +1,49 @@
 ---
 title: "Ingredient Analysis"
 author: "Victor Nguyen"
-date: "2022-11-07"
-output: pdf_document
+date: "2022/11/07 - 2022/11/"
+output:
+    pdf_document:
+        toc: true
+    html_document:
+        toc: true
+        toc_float: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Set options
+knitr::opts_chunk$set(
+    echo=TRUE,
+    warning=FALSE,
+    message=FALSE,
+    fig.align='center'
+)
+options(digits=5)
+
+# Import libraries
+library(tidyverse)
+library(ggplot2)
 ```
+
+# Data
+
+## Data Processing
+
+```{r}
+# Read in data
+ingredients <- read_csv('ingredients.csv')
+```
+
+# Vitamins in Relation to Minerals
+
+## Vitamin B12
+
+## Vitamin B6
+
+# Water Content
+
+## Water vs. Lipids
+
+## Water vs. Fiber
+
+# Vitamins

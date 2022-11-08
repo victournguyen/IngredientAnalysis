@@ -1,15 +1,38 @@
 data processing
 - convert to correct data types
+	-- make category into a factor
+- remove vitamin d (last observation)
 
 purpose
 - investigate relationships between amounts of various nutrients
 
 3 new vars
-- 
+- make groups of amounts of b12 (factor)
+- broader categories
+	-- dairy/fatty, meat, fruits/veg/plants, other
+- sum of vitamins
+
+univar plots
+- col plot of category (to view what the data set has)
+- col plot of broad category
+- histogram of b12, copper, zinc, water, total lipids
+
+multivar plots
+- groups of b12, col plot by category
+- b12 vs copper, b12 vs zinc, b6 vs copper, b6 vs zinc
+	-- display in 2 rows of 2 plots
+	-- iron and zinc are pos cor to b6 and b12, copper to b12 but not b6?
+- water vs total lipids, water vs fiber, total lipids vs fiber
+	-- color by category (could use RColorBrewer or ggplot2)
+- boxplots for sum of vitamins, grouped by broad category
 
 function
-- create plot
-- 
+- check b12 group and add
+- make broader categories
 
 for loop
-- 
+- check b12 group and add
+
+debug
+- working directory
+- reading console error when making graphs
