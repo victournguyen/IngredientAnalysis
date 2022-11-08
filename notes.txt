@@ -2,6 +2,7 @@ data processing
 - convert to correct data types
 	-- make category into a factor
 - remove vitamin d (last observation)
+- rename columns to not have spaces (easier to handle)
 
 purpose
 - investigate relationships between amounts of various nutrients
