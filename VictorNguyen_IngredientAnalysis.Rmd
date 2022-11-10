@@ -13,7 +13,7 @@ output:
 ```{r setup, include=FALSE}
 # Set options
 knitr::opts_chunk$set(
-    echo=TRUE,
+    echo=FALSE,
     warning=FALSE,
     message=FALSE,
     fig.align='center'
@@ -23,6 +23,7 @@ options(digits=5)
 # Import libraries
 library(tidyverse)
 library(ggplot2)
+library(gridExtra)
 ```
 
 # Data
@@ -32,8 +33,100 @@ library(ggplot2)
 ```{r}
 # Read in data
 ingredients <- read_csv('ingredients.csv')
+ingredients <- ingredients %>%
+    filter(!str_detect(Category, '^Vitamin D'))
+ingredients$Category <- as.factor(ingredients$Category)
+ingredients <- ingredients %>%
+    rename_with(~gsub(' ', '', .x)) %>%
+    rename(Data.Vitamins.VitaminA=`Data.Vitamins.VitaminA-RAE`)
 ```
 
+# Temporary
+
+```{r}
+unique(ingredients$Category)
+```
+
+```{r}
+ingredients$Data.Vitamins.TotalVitamin <- ingredients$Data.Vitamins.VitaminA + ingredients$Data.Vitamins.VitaminB12 + ingredients$Data.Vitamins.VitaminB6 * 1000 + ingredients$Data.Vitamins.VitaminC * 1000 + ingredients$Data.Vitamins.VitaminE * 1000 + ingredients$Data.Vitamins.VitaminK
+```
+
+```{r}
+b12_median <- median(ingredients$Data.Vitamins.VitaminB12)
+lvls <- c("Less than 1", "Between 1 and 2", "Between 2 and 3", "Greater than 3")
+b12_groups <- character(0)
+add_b12 <- function(x) {
+    if (x < 1)
+        label <- lvls[1]
+    else if (x < 2)
+        label <- lvls[2]
+    else if (x <= 3)
+        label <- lvls[3]
+    else
+        label <- lvls[4]
+    return(label)
+}
+for (item in ingredients$Data.Vitamins.VitaminB12) {
+    b12_groups[length(b12_groups) + 1] <- add_b12(item)
+}
+b12_groups <- as.factor(b12_groups)
+ingredients$Data.Vitamins.VitaminB12.Group <- b12_groups
+```
+
+```{r}
+ggplot(ingredients) +
+    geom_histogram(aes(Data.Vitamins.VitaminB12))
+
+ggplot(ingredients) +
+    geom_histogram(aes(Data.MajorMinerals.Copper))
+
+ggplot(ingredients) +
+    geom_histogram(aes(Data.MajorMinerals.Zinc))
+
+ggplot(ingredients) +
+    geom_histogram(aes(Data.Water))
+
+ggplot(ingredients) +
+    geom_histogram(aes(Data.Fat.TotalLipid))
+
+ggplot(ingredients) +
+    geom_histogram(aes(Data.Fiber))
+```
+
+```{r}
+# ggplot(ingredients) +
+#     geom_bar(aes(x=Data.Vitamins.VitaminB12.Group, fill=))
+```
+
+```{r}
+b12_vs_copper <- ggplot(ingredients) +
+    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB12))
+b12_vs_zinc <- ggplot(ingredients) +
+    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB12))
+b6_vs_copper <- ggplot(ingredients) +
+    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB6))
+b6_vs_zinc <- ggplot(ingredients) +
+    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB6))
+
+grid.arrange(b12_vs_copper, b12_vs_zinc, b6_vs_copper, b6_vs_zinc, nrow=2, ncol=2)
+```
+
+```{r}
+fat_vs_water <- ggplot(ingredients) +
+    geom_point(aes(x=Data.Water, y=Data.Fat.TotalLipid))
+fiber_vs_water <- ggplot(ingredients) +
+    geom_point(aes(x=Data.Water, y=Data.Fiber))
+
+grid.arrange(fat_vs_water, fiber_vs_water, nrow=1, ncol=2)
+
+ggplot(ingredients) +
+    geom_point(aes(x=Data.Fiber, y=Data.Fat.TotalLipid))
+```
+
+```{r}
+# ggplot(ingredients) +
+#     geom_boxplot(aes(x=Data.Vitamins.TotalVitamin, fill=))
+```
 # Vitamins in Relation to Minerals
 
 ## Vitamin B12

@@ -3,6 +3,8 @@ data processing
 	-- make category into a factor
 - remove vitamin d (last observation)
 - rename columns to not have spaces (easier to handle)
+- create broad categories
+	-- there are two infant formula categories
 
 purpose
 - investigate relationships between amounts of various nutrients
@@ -14,17 +16,16 @@ purpose
 - sum of vitamins
 
 univar plots
-- col plot of category (to view what the data set has)
-- col plot of broad category
+- bar plot of broad category
 - histogram of b12, copper, zinc, water, total lipids
 
 multivar plots
-- groups of b12, col plot by category
+- groups of b12, bar plot by broad category
 - b12 vs copper, b12 vs zinc, b6 vs copper, b6 vs zinc
 	-- display in 2 rows of 2 plots
 	-- iron and zinc are pos cor to b6 and b12, copper to b12 but not b6?
-- water vs total lipids, water vs fiber, total lipids vs fiber
-	-- color by category (could use RColorBrewer or ggplot2)
+- total lipids vs water, fiber vs water, total lipids vs fiber
+	-- color by broad category (could use RColorBrewer or ggplot2)
 - boxplots for sum of vitamins, grouped by broad category
 
 function
