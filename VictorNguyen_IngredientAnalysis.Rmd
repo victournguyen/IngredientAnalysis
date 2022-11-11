@@ -24,6 +24,7 @@ options(digits=5)
 library(tidyverse)
 library(ggplot2)
 library(gridExtra)
+library(RColorBrewer)
 ```
 
 # Data
@@ -43,12 +44,37 @@ ingredients <- ingredients %>%
 
 # Temporary
 
-```{r}
+```{r include=FALSE}
 unique(ingredients$Category)
 ```
 
 ```{r}
-ingredients$Data.Vitamins.TotalVitamin <- ingredients$Data.Vitamins.VitaminA + ingredients$Data.Vitamins.VitaminB12 + ingredients$Data.Vitamins.VitaminB6 * 1000 + ingredients$Data.Vitamins.VitaminC * 1000 + ingredients$Data.Vitamins.VitaminE * 1000 + ingredients$Data.Vitamins.VitaminK
+groups <- read_csv('category_broad.csv')
+broad_cat <- character(0)
+for (c in ingredients$Category) {
+    u <- FALSE
+    for (g in 1:ncol(groups)) {
+        if (c %in% groups[[g]]) {
+            broad_cat[length(broad_cat) + 1] <- colnames(groups)[g]
+            u <- TRUE
+            break
+        }
+    }
+    # if (!u) {
+    #     broad_cat[length(broad_cat) + 1] <- NA
+    #     print(c)
+    # }
+}
+ingredients$Category.Broad <- as.factor(broad_cat)
+```
+
+```{r}
+ingredients$Data.Vitamins.TotalVitamin <- ingredients$Data.Vitamins.VitaminA +
+    ingredients$Data.Vitamins.VitaminB12 +
+    ingredients$Data.Vitamins.VitaminB6 * 1000 +
+    ingredients$Data.Vitamins.VitaminC * 1000 +
+    ingredients$Data.Vitamins.VitaminE * 1000 +
+    ingredients$Data.Vitamins.VitaminK
 ```
 
 ```{r}
@@ -69,63 +95,229 @@ add_b12 <- function(x) {
 for (item in ingredients$Data.Vitamins.VitaminB12) {
     b12_groups[length(b12_groups) + 1] <- add_b12(item)
 }
-b12_groups <- as.factor(b12_groups)
+b12_groups <- factor(b12_groups, levels=lvls)
 ingredients$Data.Vitamins.VitaminB12.Group <- b12_groups
 ```
 
 ```{r}
-ggplot(ingredients) +
-    geom_histogram(aes(Data.Vitamins.VitaminB12))
+ingredients <- ingredients %>%
+    relocate(Category.Broad, .before=Category) %>%
+    relocate(Data.Vitamins.VitaminB12.Group, .after=Data.Vitamins.VitaminB12)
 
-ggplot(ingredients) +
-    geom_histogram(aes(Data.MajorMinerals.Copper))
+plt <- ggplot(ingredients)
+```
 
-ggplot(ingredients) +
-    geom_histogram(aes(Data.MajorMinerals.Zinc))
+```{r fig.width=4, fig.height=4}
+b12 <- plt +
+    geom_histogram(
+        aes(Data.Vitamins.VitaminB12),
+        color='black',
+        fill='#c94f47'
+    ) +
+    labs(
+        title='Distribution of Vitamin B12',
+        x='Vitamin B12 (mcg)',
+        y='Frequency',
+    ) +
+    theme_bw()
 
-ggplot(ingredients) +
-    geom_histogram(aes(Data.Water))
+b6 <- plt +
+    geom_histogram(
+        aes(Data.Vitamins.VitaminB6),
+        color='black',
+        fill='#4abd68'
+    ) +
+    labs(
+        title='Distribution of Vitamin B6',
+        x='Vitamin B6 (mg)',
+        y='Frequency',
+    ) +
+    theme_bw()
 
-ggplot(ingredients) +
-    geom_histogram(aes(Data.Fat.TotalLipid))
+total_vitamin <- plt +
+    geom_histogram(
+        aes(Data.Vitamins.TotalVitamin),
+        color='black',
+        fill='#ae45ba'
+    ) +
+    labs(
+        title='Distribution of Vitamin B12',
+        x='Vitamin B12 (mcg)',
+        y='Frequency',
+    ) +
+    theme_bw()
 
-ggplot(ingredients) +
-    geom_histogram(aes(Data.Fiber))
+copper <- plt +
+    geom_histogram(
+        aes(Data.MajorMinerals.Copper),
+        color='black',
+        fill='#c37f12'
+    ) +
+    labs(
+        title='Distribution of copper',
+        x='Copper (mg)',
+        y='Frequency',
+    ) +
+    theme_bw()
+
+zinc <- plt +
+    geom_histogram(
+        aes(Data.MajorMinerals.Zinc),
+        color='black',
+        fill='#9c9c9c'
+    ) +
+    labs(
+        title='Distribution of zinc',
+        x='Zinc (mg)',
+        y='Frequency',
+    ) +
+    theme_bw()
+
+water <- plt +
+    geom_histogram(
+        aes(Data.Water),
+        color='black',
+        fill='#9ed8f0'
+    ) +
+    labs(
+        title='Distribution of water',
+        x='Water (g)',
+        y='Frequency',
+    ) +
+    theme_bw()
+
+total_lipid <- plt +
+    geom_histogram(
+        aes(Data.Fat.TotalLipid),
+        color='black',
+        fill='#e8c433'
+    ) +
+    labs(
+        title='Distribution of total lipid',
+        x='Total Lipid (g)',
+        y='Frequency',
+    ) +
+    theme_bw()
+
+fiber <- plt +
+    geom_histogram(
+        aes(Data.Fiber),
+        color='black',
+        fill='#7a5225'
+    ) +
+    labs(
+        title='Distribution of fiber',
+        x='Fiber (g)',
+        y='Frequency',
+    ) +
+    theme_bw()
+
+grid.arrange(b12, b6, total_vitamin, copper, zinc, water, total_lipid, fiber, nrow=4, ncol=2)
 ```
 
 ```{r}
-# ggplot(ingredients) +
-#     geom_bar(aes(x=Data.Vitamins.VitaminB12.Group, fill=))
+plt +
+    geom_bar(
+        aes(x=Data.Vitamins.VitaminB12.Group, fill=Category.Broad),
+        position='dodge',
+        color='black'
+    ) +
+    scale_fill_brewer(palette='Set3') +
+    labs(
+        title='',
+        x='Vitamin B12 Group',
+        y='Frequency',
+        fill='Broad Category'
+    ) +
+    theme_bw()
 ```
 
 ```{r}
-b12_vs_copper <- ggplot(ingredients) +
-    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB12))
-b12_vs_zinc <- ggplot(ingredients) +
-    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB12))
-b6_vs_copper <- ggplot(ingredients) +
-    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB6))
-b6_vs_zinc <- ggplot(ingredients) +
-    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB6))
+b12_vs_copper <- plt +
+    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB12)) +
+    labs(
+        x='',
+        y='Vitamin B12 (mcg)',
+        title='Vitamin B12 vs. copper'
+    ) +
+    theme_bw()
+
+b12_vs_zinc <- plt +
+    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB12)) +
+    labs(
+        x='',
+        y='',
+        title='Vitamin B12 vs. zinc'
+    ) +
+    theme_bw()
+
+b6_vs_copper <- plt +
+    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB6)) +
+    labs(
+        x='Copper (mg)',
+        y='Vitamin B6 (mg)',
+        title='Vitamin B6 vs. copper'
+    ) +
+    theme_bw()
+
+b6_vs_zinc <- plt +
+    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB6)) +
+    labs(
+        x='Zinc (mg)',
+        y='',
+        title='Vitamin B6 vs. zinc'
+    ) +
+    theme_bw()
 
 grid.arrange(b12_vs_copper, b12_vs_zinc, b6_vs_copper, b6_vs_zinc, nrow=2, ncol=2)
 ```
 
 ```{r}
-fat_vs_water <- ggplot(ingredients) +
-    geom_point(aes(x=Data.Water, y=Data.Fat.TotalLipid))
-fiber_vs_water <- ggplot(ingredients) +
-    geom_point(aes(x=Data.Water, y=Data.Fiber))
+fat_vs_water <- plt +
+    geom_point(aes(x=Data.Water, y=Data.Fat.TotalLipid)) +
+    labs(
+        title='Total lipid vs. water',
+        x='Water (g)',
+        y='Total Lipid (g)'
+    ) +
+    theme_bw()
+
+fiber_vs_water <- plt +
+    geom_point(aes(x=Data.Water, y=Data.Fiber)) +
+    labs(
+        title='Fiber vs. water',
+        x='Water (g)',
+        y='Fiber (g)'
+    ) +
+    theme_bw()
 
 grid.arrange(fat_vs_water, fiber_vs_water, nrow=1, ncol=2)
 
-ggplot(ingredients) +
-    geom_point(aes(x=Data.Fiber, y=Data.Fat.TotalLipid))
+plt +
+    geom_point(aes(x=Data.Fiber, y=Data.Fat.TotalLipid)) +
+    labs(
+        title='Total lipid vs. fiber',
+        x='Total Lipid (g)',
+        y='Fiber (g)'
+    ) +
+    theme_bw()
 ```
 
 ```{r}
-# ggplot(ingredients) +
-#     geom_boxplot(aes(x=Data.Vitamins.TotalVitamin, fill=))
+plt +
+    geom_boxplot(aes(x=Data.Vitamins.TotalVitamin, fill=Category.Broad)) +
+    scale_fill_brewer(palette='Set3') +
+    xlim(0, 6e4) +
+    labs(
+        title='Distributions of total vitamin for each broad category',
+        x='Total Vitamin (mcg)',
+        fill='Broad Category'
+    ) +
+    theme_bw() +
+    theme(
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()
+    )
 ```
 # Vitamins in Relation to Minerals
 

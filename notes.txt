@@ -27,6 +27,7 @@ multivar plots
 - total lipids vs water, fiber vs water, total lipids vs fiber
 	-- color by broad category (could use RColorBrewer or ggplot2)
 - boxplots for sum of vitamins, grouped by broad category
+	-- NOTE: explain the xlim()
 
 function
 - check b12 group and add
@@ -38,3 +39,6 @@ for loop
 debug
 - working directory
 - reading console error when making graphs
+
+extra
+- make graph titles enticing
