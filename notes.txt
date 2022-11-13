@@ -52,4 +52,5 @@ checklist
 - describe where functions are
 - no unwanted text overlap
 - check bins of histograms
-- check figure size
+- check figure output size
+- change figure width and height for the double scatter plots
