@@ -8,6 +8,9 @@ output:
     html_document:
         toc: true
         toc_float: true
+bibliography: references.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/ieee-with-url.csl
+link-citations: true
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +19,8 @@ knitr::opts_chunk$set(
     echo=FALSE,
     warning=FALSE,
     message=FALSE,
+    out.width='80%',
+    out.height='80%',
     fig.align='center'
 )
 options(digits=5)
@@ -25,11 +30,22 @@ library(tidyverse)
 library(ggplot2)
 library(gridExtra)
 library(RColorBrewer)
+library(knitr)
 ```
+
+# Purpose
+
+The purpose of this investigation is to find relationships between certain nutrients. Discovering these correlations can make designing healthy diets easier and more efficient.
 
 # Data
 
+The data set analyzed is an ingredient data set from CORGIS (The Collection of Really Great, Interesting, Situated Datasets @corgis). It includes nutritional information on various food ingredients, collected from the United States Department of Agriculture's (USDA) Food Composition Database @ingredients.
+
+Obtaining the data set was simple: the CSV file was accessible through a download link on the website. It is a public data set and does not need any forms or contact with the authors to access.
+
 ## Data Processing
+
+To load the data into R, the `read_csv` function from tidyverse was used. Looking at the data, the last row contains details about Vitamin D as an ingredient, but since this analysis is only interested in food items, it was removed. Additionally, its data does not have any nonzero values, so it does not have much purpose for this evaluation. The data type of the category column was changed from character to factor, and the spaces from the column names were removed for easier handling. The types of the other columns automatically assigned by R already properly represented their data. Finally, the Vitamin A column was renamed to be more concise. There were no unknown values in the data set.
 
 ```{r}
 # Read in data
@@ -42,7 +58,35 @@ ingredients <- ingredients %>%
     rename(Data.Vitamins.VitaminA=`Data.Vitamins.VitaminA-RAE`)
 ```
 
-# Temporary
+## Cleaned Data
+
+The cleaned data consists of information in a tabular format. Each row is an observation of a food item or ingredient. The columns are named in a hierarchical manner where the category, description, and identifiers are separate from the numerical columns. This breaks down into more levels, such as vitamins and minerals.
+
+```{r}
+primary <- tribble(
+    ~`Variable of Interest`, ~Type, ~Description, ~`Missing Values?`,
+    'Data.Vitamins.VitaminB12', 'double', 'Amount of Vitamin B12, measured in micrograms (mcg)', 'No',
+    'Data.Vitamins.VitaminB6', 'double', 'Amount of Vitamin B6, measured in miiligrams (mg)', 'No',
+    'Data.MajorMinerals.Copper', 'double', 'Amount of copper, measured in milligrams (mg)', 'No',
+    'Data.MajorMinerals.Zinc', 'double', 'Amount of zinc, measured in milligrams (mg)', 'No',
+    'Data.Water', 'double', 'Amount of water, measured in grams (g)', 'No',
+    'Data.Fat.TotalLipid', 'double', 'Total lipid content, measured in grams (g)', 'No',
+    'Data.Fiber', 'double', 'Amount of fiber, measured in grams (g)', 'No'
+)
+kable(primary)
+```
+
+## New Variables
+
+```{r}
+new_vars <- tribble(
+    ~`New Variable`, ~Type, ~Description, ~`Missing Values?`,
+    'Category.Broad', 'factor', 'Broad category that groups the 479 categories (after removing Vitamin D) into 5 broader categories. One of Dairy/Fatty, Meat, Fruits/Vegetables/Plants, Cereals/Grains, Other. Manually grouped the 479 categories then read into R for automatic labeling.', 'No',
+    'Data.Vitamins.TotalVitamin', 'double', 'Total vitamin content, measured in micrograms (mcg). Calculated by adding all of the columns starting with Data.Vitamins. (Vitamin A, B12, B6, C, E, and K)', 'No',
+    'Data.Vitamins.VitaminB12.Group', 'factor', 'Group of Vitamin B12, based on the value of Data.Vitamins.VitaminB12. Grouped into "Less than 1", "Between 1 and 2", "Between 2 and 3", and "Greater than 3".', 'No'
+)
+kable(new_vars)
+```
 
 ```{r include=FALSE}
 unique(ingredients$Category)
@@ -66,20 +110,16 @@ for (c in ingredients$Category) {
     # }
 }
 ingredients$Category.Broad <- as.factor(broad_cat)
-```
 
-```{r}
 ingredients$Data.Vitamins.TotalVitamin <- ingredients$Data.Vitamins.VitaminA +
     ingredients$Data.Vitamins.VitaminB12 +
     ingredients$Data.Vitamins.VitaminB6 * 1000 +
     ingredients$Data.Vitamins.VitaminC * 1000 +
     ingredients$Data.Vitamins.VitaminE * 1000 +
     ingredients$Data.Vitamins.VitaminK
-```
 
-```{r}
 b12_median <- median(ingredients$Data.Vitamins.VitaminB12)
-lvls <- c("Less than 1", "Between 1 and 2", "Between 2 and 3", "Greater than 3")
+lvls <- c('Less than 1', 'Between 1 and 2', 'Between 2 and 3', 'Greater than 3')
 b12_groups <- character(0)
 add_b12 <- function(x) {
     if (x < 1)
@@ -103,211 +143,57 @@ ingredients$Data.Vitamins.VitaminB12.Group <- b12_groups
 ingredients <- ingredients %>%
     relocate(Category.Broad, .before=Category) %>%
     relocate(Data.Vitamins.VitaminB12.Group, .after=Data.Vitamins.VitaminB12)
-
-plt <- ggplot(ingredients)
 ```
 
-```{r fig.width=4, fig.height=4}
-b12 <- plt +
-    geom_histogram(
-        aes(Data.Vitamins.VitaminB12),
-        color='black',
-        fill='#c94f47'
-    ) +
-    labs(
-        title='Distribution of Vitamin B12',
-        x='Vitamin B12 (mcg)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-b6 <- plt +
-    geom_histogram(
-        aes(Data.Vitamins.VitaminB6),
-        color='black',
-        fill='#4abd68'
-    ) +
-    labs(
-        title='Distribution of Vitamin B6',
-        x='Vitamin B6 (mg)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-total_vitamin <- plt +
-    geom_histogram(
-        aes(Data.Vitamins.TotalVitamin),
-        color='black',
-        fill='#ae45ba'
-    ) +
-    labs(
-        title='Distribution of Vitamin B12',
-        x='Vitamin B12 (mcg)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-copper <- plt +
-    geom_histogram(
-        aes(Data.MajorMinerals.Copper),
-        color='black',
-        fill='#c37f12'
-    ) +
-    labs(
-        title='Distribution of copper',
-        x='Copper (mg)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-zinc <- plt +
-    geom_histogram(
-        aes(Data.MajorMinerals.Zinc),
-        color='black',
-        fill='#9c9c9c'
-    ) +
-    labs(
-        title='Distribution of zinc',
-        x='Zinc (mg)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-water <- plt +
-    geom_histogram(
-        aes(Data.Water),
-        color='black',
-        fill='#9ed8f0'
-    ) +
-    labs(
-        title='Distribution of water',
-        x='Water (g)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-total_lipid <- plt +
-    geom_histogram(
-        aes(Data.Fat.TotalLipid),
-        color='black',
-        fill='#e8c433'
-    ) +
-    labs(
-        title='Distribution of total lipid',
-        x='Total Lipid (g)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-fiber <- plt +
-    geom_histogram(
-        aes(Data.Fiber),
-        color='black',
-        fill='#7a5225'
-    ) +
-    labs(
-        title='Distribution of fiber',
-        x='Fiber (g)',
-        y='Frequency',
-    ) +
-    theme_bw()
-
-grid.arrange(b12, b6, total_vitamin, copper, zinc, water, total_lipid, fiber, nrow=4, ncol=2)
-```
+# Analysis
 
 ```{r}
-plt +
-    geom_bar(
-        aes(x=Data.Vitamins.VitaminB12.Group, fill=Category.Broad),
-        position='dodge',
-        color='black'
-    ) +
-    scale_fill_brewer(palette='Set3') +
-    labs(
-        title='',
-        x='Vitamin B12 Group',
-        y='Frequency',
-        fill='Broad Category'
-    ) +
-    theme_bw()
+make_hist <- function(col, fill='#4abd68', title='', xlab='') {
+    plt <- ggplot() +
+        geom_histogram(
+            aes(ingredients[[col]]),
+            color='black',
+            fill=fill
+        ) +
+        labs(
+            title=title,
+            x=xlab,
+            y='Frequency',
+        ) +
+        theme_bw()
+    return(plt)
+}
+
+make_scatter <- function(x, y, title='', xlab='', ylab='') {
+    plt <- ggplot() +
+        geom_point(aes(x=ingredients[[x]], y=ingredients[[y]])) +
+        labs(
+            title=title,
+            x=xlab,
+            y=ylab
+        ) +
+        theme_bw()
+    return(plt)
+}
 ```
 
+In this section, the total vitamin content, vitamins in relation to minerals, and water content are examined.
+
+## Total Vitamin Content
+
+When the total vitamin content is looked at, there the graph is skewed to the right and unimodal. For this data set, the total vitamin content ranges from `r min(ingredients$Data.Vitamins.TotalVitamin)` mcg to `r max(ingredients$Data.Vitamins.TotalVitamin)` mcg with a median of `r median(ingredients$Data.Vitamins.TotalVitamin)` mcg.
+
 ```{r}
-b12_vs_copper <- plt +
-    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB12)) +
-    labs(
-        x='',
-        y='Vitamin B12 (mcg)',
-        title='Vitamin B12 vs. copper'
-    ) +
-    theme_bw()
-
-b12_vs_zinc <- plt +
-    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB12)) +
-    labs(
-        x='',
-        y='',
-        title='Vitamin B12 vs. zinc'
-    ) +
-    theme_bw()
-
-b6_vs_copper <- plt +
-    geom_point(aes(x=Data.MajorMinerals.Copper, y=Data.Vitamins.VitaminB6)) +
-    labs(
-        x='Copper (mg)',
-        y='Vitamin B6 (mg)',
-        title='Vitamin B6 vs. copper'
-    ) +
-    theme_bw()
-
-b6_vs_zinc <- plt +
-    geom_point(aes(x=Data.MajorMinerals.Zinc, y=Data.Vitamins.VitaminB6)) +
-    labs(
-        x='Zinc (mg)',
-        y='',
-        title='Vitamin B6 vs. zinc'
-    ) +
-    theme_bw()
-
-grid.arrange(b12_vs_copper, b12_vs_zinc, b6_vs_copper, b6_vs_zinc, nrow=2, ncol=2)
+make_hist('Data.Vitamins.TotalVitamin', '#ae45ba', 'Distribution of total vitamin content', 'Total Vitamin (mcg)')
 ```
 
-```{r}
-fat_vs_water <- plt +
-    geom_point(aes(x=Data.Water, y=Data.Fat.TotalLipid)) +
-    labs(
-        title='Total lipid vs. water',
-        x='Water (g)',
-        y='Total Lipid (g)'
-    ) +
-    theme_bw()
-
-fiber_vs_water <- plt +
-    geom_point(aes(x=Data.Water, y=Data.Fiber)) +
-    labs(
-        title='Fiber vs. water',
-        x='Water (g)',
-        y='Fiber (g)'
-    ) +
-    theme_bw()
-
-grid.arrange(fat_vs_water, fiber_vs_water, nrow=1, ncol=2)
-
-plt +
-    geom_point(aes(x=Data.Fiber, y=Data.Fat.TotalLipid)) +
-    labs(
-        title='Total lipid vs. fiber',
-        x='Total Lipid (g)',
-        y='Fiber (g)'
-    ) +
-    theme_bw()
-```
+The graph below shows five box plots, each for one of the 5 broad categories (some outliers were left out of the visualization). Fruits, vegetables, and other plant products tend to have the highest vitamin content (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Fruits/Vegetables/Plants'])` mcg) while meat products have the lowest (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Meat'])` mcg).
 
 ```{r}
-plt +
+ggplot(ingredients) +
     geom_boxplot(aes(x=Data.Vitamins.TotalVitamin, fill=Category.Broad)) +
     scale_fill_brewer(palette='Set3') +
-    xlim(0, 6e4) +
+    xlim(0, 5e4) +
     labs(
         title='Distributions of total vitamin for each broad category',
         x='Total Vitamin (mcg)',
@@ -319,16 +205,130 @@ plt +
         axis.ticks.y=element_blank()
     )
 ```
-# Vitamins in Relation to Minerals
 
-## Vitamin B12
+## Vitamins in Relation to Minerals
 
-## Vitamin B6
+While vitamins are organic, and minerals are inorganic @vitamins_and_minerals, investigating the correlations in the amounts that appear in ingredients can provide explanations to why some foods are better than others for specific tasks. Vitamin B12 and Vitamin B6 were the vitamins explored, and copper and zinc were the minerals examined.
 
-# Water Content
+### Vitamin B12
 
-## Water vs. Lipids
+The distribution of Vitamin B12 in this data set is unimodal and skewed right, with no outliers on the lower side and many on the greater side. The values range from `r min(ingredients$Data.Vitamins.VitaminB12)` mcg to `r max(ingredients$Data.Vitamins.VitaminB12)` mcg with a median of `r median(ingredients$Data.Vitamins.VitaminB12)` mcg.
 
-## Water vs. Fiber
+```{r}
+make_hist('Data.Vitamins.VitaminB12', '#c94f47', 'Distribution of Vitamin B12', 'Vitamin B12 (mcg)')
+```
 
-# Vitamins
+Interesting comparisions can be made when splitting this distribution. When the data is split into groups of Vitamin B12 and displayed by broad category, it can be seen that plants and miscellaneous ingredients are very significant in the "Less than 1" section but almost nonexistent in the others. This reveals the possibility that dairy and meat products have more Vitamin B12 than plant products.
+
+```{r}
+ggplot(ingredients) +
+    geom_bar(
+        aes(x=Data.Vitamins.VitaminB12.Group, fill=Category.Broad),
+        position='dodge',
+        color='black'
+    ) +
+    scale_fill_brewer(palette='Set3') +
+    labs(
+        title='[title]',
+        x='Vitamin B12 Group',
+        y='Frequency',
+        fill='Broad Category'
+    ) +
+    theme_bw()
+```
+
+The distribution of copper looks like that of Vitamin B12—unimodal and skewed right, with many outliers on the greater side. Its values range from `r min(ingredients$Data.MajorMinerals.Copper)` mg to `r max(ingredients$Data.MajorMinerals.Copper)` mg with a median of `r median(ingredients$Data.MajorMinerals.Copper)` mg.
+
+```{r}
+make_hist('Data.MajorMinerals.Copper', '#c37f12', 'Distribution of copper', 'Copper (mg)')
+```
+
+The data for zinc is similar to that of Vitamin B12 and copper in that it is unimodal and skewed right, again with many outliers on the right. The values range from `r min(ingredients$Data.MajorMinerals.Zinc)` mg to `r max(ingredients$Data.MajorMinerals.Zinc)` mg with a median of `r median(ingredients$Data.MajorMinerals.Zinc)` mg.
+
+```{r}
+make_hist('Data.MajorMinerals.Zinc', '#9c9c9c', 'Distribution of zinc', 'Zinc (mg)')
+```
+
+Vitamin B12 was found to have a strong, positive, correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB12)`) and a weak, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB12)`).
+
+Note: the relationships may be difficult to see in the scatter plots below.
+
+```{r}
+b12_vs_copper <- make_scatter('Data.MajorMinerals.Copper', 'Data.Vitamins.VitaminB12', 'Vitamin B12 vs. copper', 'Copper (mg)', 'Vitamin B12 (mcg)')
+
+b12_vs_zinc <- make_scatter('Data.MajorMinerals.Zinc', 'Data.Vitamins.VitaminB12', 'Vitamin B12 vs. zinc', 'Zinc (mg)')
+
+grid.arrange(b12_vs_copper, b12_vs_zinc, nrow=1, ncol=2)
+```
+
+### Vitamin B6
+
+Like Vitamin B12, Vitamin B6 has a distribution that is unimodal and skewed right, with many outliers on the right side. This data ranges from `r min(ingredients$Data.Vitamins.VitaminB6)` mg to `r max(ingredients$Data.Vitamins.VitaminB6)` mg, and its median is `r median(ingredients$Data.Vitamins.VitaminB6)` mg.
+
+```{r}
+make_hist('Data.Vitamins.VitaminB6', title='Distribution of Vitamin B6', xlab='Vitamin B6 (mg)')
+```
+
+Unlike Vitamin B12, Vitamin B6 has a very weak, positive correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB6)`) and a moderate, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB6)`).
+
+```{r}
+b6_vs_copper <- make_scatter('Data.MajorMinerals.Copper', 'Data.Vitamins.VitaminB6', 'Vitamin B6 vs. copper', 'Copper (mg)', 'Vitamin B6 (mg)')
+
+b6_vs_zinc <- make_scatter('Data.MajorMinerals.Zinc', 'Data.Vitamins.VitaminB6', 'Vitamin B6 vs. zinc', 'Zinc (mg)')
+
+grid.arrange(b6_vs_copper, b6_vs_zinc, nrow=1, ncol=2)
+```
+
+## Water Content
+
+Water content is another significant factor to consider as food types will have varying levels of water. The human body is also made up of about 60% water @water, so finding what ingredients have high water can be useful in replenishing thirst in the form of food.
+
+The distribution of water looks different than many of the other variables of interest because it is bimodal. It ranges from `r min(ingredients$Data.Water)` g to `r max(ingredients$Data.Water)` g and has a median of `r median(ingredients$Data.Water)` g.
+
+```{r}
+make_hist('Data.Water', '#9ed8f0', 'Distribution of water', 'Water (g)')
+```
+
+### Water vs. Lipids
+
+Looking at the fat content of an ingredient could give insight to its water content. The distribution of total lipid content, like most of the other variables, is unimodal and skewed right, but it is less skewed than those graphs. It has a minimum of `r min(ingredients$Data.Fat.TotalLipid)` g and a maximum of `r max(ingredients$Data.Fat.TotalLipid)` g with a median of `r median(ingredients$Data.Fat.TotalLipid)` g.
+
+```{r}
+make_hist('Data.Fat.TotalLipid', '#e8c433', 'Distribution of total lipid', 'Total Lipid (g)')
+```
+
+A moderate, negative correlation between total lipid content and water was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Water)`). As fat content increases, water content decreases.
+
+```{r}
+make_scatter('Data.Fat.TotalLipid', 'Data.Water', 'Water vs. total lipid content', 'Total Lipid (g)', 'Water (g)')
+```
+
+### Water vs. Fiber
+
+Fiber is the other predictor that was investigated in relation to the water content. Its distribution is similar to that of total lipid content, but it ranges from `r min(ingredients$Data.Fiber)` g to `r max(ingredients$Data.Fiber)` g and has a median of `r median(ingredients$Data.Fiber)` g.
+
+```{r}
+make_hist('Data.Fiber', '#7a5225', 'Distribution of fiber', 'Fiber (g)')
+```
+
+Fiber was found to have a moderate, negative correlation with water content (`r cor(x=ingredients$Data.Fiber, y=ingredients$Data.Water)`). As fiber increases, water decreases.
+
+```{r}
+make_scatter('Data.Fiber', 'Data.Water', 'Water vs. fiber', 'Fiber (g)', 'Water (g)')
+```
+
+Since the correlation of water and total fat are in the same direction as and similar magnitude to that of water and fiber, total fat as a function of fiber was also analyzed. However, no correlation was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Fiber)`).
+
+```{r}
+make_scatter('Data.Fiber', 'Data.Fat.TotalLipid', 'Total lipid vs. fiber', 'Total Lipid (g)', 'Fiber (g)')
+```
+
+# Debugging
+
+# Conclusion
+
+# References
+
+\vspace{6.5pt}
+
+<div id='refs'></div>

@@ -32,6 +32,7 @@ multivar plots
 function
 - check b12 group and add
 - make broader categories
+- make histograms, scatter plots
 
 for loop
 - check b12 group and add
@@ -40,5 +41,14 @@ debug
 - working directory
 - reading console error when making graphs
 
-extra
+checklist
 - make graph titles enticing
+- careful with text output in report
+- past tense
+- put min, max, median into table b/c the distributions look similar
+- look for consistency
+- implications of plots
+- make sure axis labels are correct, variables are on the correct axes
+- describe where functions are
+- no unwanted text overlap
+- check bins of histograms
