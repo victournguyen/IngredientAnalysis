@@ -52,3 +52,4 @@ checklist
 - describe where functions are
 - no unwanted text overlap
 - check bins of histograms
+- check figure size
