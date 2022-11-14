@@ -1,7 +1,7 @@
 ---
 title: "Ingredient Analysis"
 author: "Victor Nguyen"
-date: "2022/11/07 - 2022/11/"
+date: "2022 November 7 - 2022 November "
 output:
     pdf_document:
         toc: true
@@ -19,8 +19,8 @@ knitr::opts_chunk$set(
     echo=FALSE,
     warning=FALSE,
     message=FALSE,
-    out.width='80%',
-    out.height='80%',
+    out.width='90%',
+    out.height='90%',
     fig.align='center'
 )
 options(digits=5)
@@ -29,13 +29,14 @@ options(digits=5)
 library(tidyverse)
 library(ggplot2)
 library(gridExtra)
+library(pander)
 library(RColorBrewer)
 library(knitr)
 ```
 
 # Purpose
 
-The purpose of this investigation is to find relationships between certain nutrients. Discovering these correlations can make designing healthy diets easier and more efficient.
+Creating diets can be difficult as many people require diets specialized for certain tasks. These may include specific nutrients, which come from particular food ingredients. The purpose of this analysis is to find relationships between certain nutrients and properties of common types of food. Discovering these correlations can make designing healthy diets easier and more efficient.
 
 # Data
 
@@ -45,7 +46,7 @@ Obtaining the data set was simple: the CSV file was accessible through a downloa
 
 ## Data Processing
 
-To load the data into R, the `read_csv` function from tidyverse was used. Looking at the data, the last row contains details about Vitamin D as an ingredient, but since this analysis is only interested in food items, it was removed. Additionally, its data does not have any nonzero values, so it does not have much purpose for this evaluation. The data type of the category column was changed from character to factor, and the spaces from the column names were removed for easier handling. The types of the other columns automatically assigned by R already properly represented their data. Finally, the Vitamin A column was renamed to be more concise. There were no unknown values in the data set.
+The `read_csv` function from tidyverse was used to load the data into R. Looking at the data, the last row contains details about Vitamin D as an ingredient, but since this analysis is only interested in food items, it was removed. Additionally, its data does not have any nonzero values, so it does not have much purpose for this evaluation. The data type of the category column was changed from character to factor, and the spaces from the column names were removed for easier handling. The types of the other columns automatically assigned by R already properly represented their data. Finally, the Vitamin A column was renamed to be more concise. There were no unknown values in the data set.
 
 ```{r}
 # Read in data
@@ -78,6 +79,8 @@ kable(primary)
 
 ## New Variables
 
+Three new variables were created to better analyze the data. Since there are 479 different categories, they can be difficult to visualize and learn from. The `Category.Broad` column aims to handle this by grouping these categories into 5 broader food categories. The process of grouping the categories was done manually, but the actual assigning of the labels was done using a loop with an if statement. The calculation of the `Data.Vitamins.TotalVitamin` data consisted of one statement, adding the vitamin columns together and changing units to micrograms if needed. Finally, the Vitamin B12 data was split into groups using a loop that calls a function which used a few if statements to check which group a value belonged to and added the correct group to the column.
+
 ```{r}
 new_vars <- tribble(
     ~`New Variable`, ~Type, ~Description, ~`Missing Values?`,
@@ -85,7 +88,7 @@ new_vars <- tribble(
     'Data.Vitamins.TotalVitamin', 'double', 'Total vitamin content, measured in micrograms (mcg). Calculated by adding all of the columns starting with Data.Vitamins. (Vitamin A, B12, B6, C, E, and K)', 'No',
     'Data.Vitamins.VitaminB12.Group', 'factor', 'Group of Vitamin B12, based on the value of Data.Vitamins.VitaminB12. Grouped into "Less than 1", "Between 1 and 2", "Between 2 and 3", and "Greater than 3".', 'No'
 )
-kable(new_vars)
+pander(new_vars, justify=rep('left', 4), split.cells=4)
 ```
 
 ```{r include=FALSE}
@@ -147,11 +150,14 @@ ingredients <- ingredients %>%
 
 # Analysis
 
+In this section, the total vitamin content, vitamins in relation to minerals, and water content are examined. Histograms and scatter plots are made using two functions (one for histograms and one for scatter plots) because the code is similar across different variables. The function for scatter plots uses an if statement to check for the vertical axis limits.
+
 ```{r}
 make_hist <- function(col, fill='#4abd68', title='', xlab='') {
     plt <- ggplot() +
         geom_histogram(
             aes(ingredients[[col]]),
+            bins=60,
             color='black',
             fill=fill
         ) +
@@ -164,30 +170,32 @@ make_hist <- function(col, fill='#4abd68', title='', xlab='') {
     return(plt)
 }
 
-make_scatter <- function(x, y, title='', xlab='', ylab='') {
-    plt <- ggplot() +
-        geom_point(aes(x=ingredients[[x]], y=ingredients[[y]])) +
+make_scatter <- function(x, y, title='', xlab='', ylab='', ylims=NA) {
+    plt <- ggplot(mapping=aes(x=ingredients[[x]], y=ingredients[[y]])) +
+        geom_point() +
+        geom_smooth(method='lm', se=FALSE, linetype='dashed', color='red') +
         labs(
             title=title,
             x=xlab,
             y=ylab
         ) +
         theme_bw()
+    if (sum(is.na(ylims)) == 0) {
+        plt <- plt + ylim(ylims[1], ylims[2])
+    }
     return(plt)
 }
 ```
 
-In this section, the total vitamin content, vitamins in relation to minerals, and water content are examined.
-
 ## Total Vitamin Content
 
-When the total vitamin content is looked at, there the graph is skewed to the right and unimodal. For this data set, the total vitamin content ranges from `r min(ingredients$Data.Vitamins.TotalVitamin)` mcg to `r max(ingredients$Data.Vitamins.TotalVitamin)` mcg with a median of `r median(ingredients$Data.Vitamins.TotalVitamin)` mcg.
+When the total vitamin content is looked at, there the graph is skewed to the right and unimodal. For this data set, the total vitamin content ranges from `r min(ingredients$Data.Vitamins.TotalVitamin)` mcg to `r max(ingredients$Data.Vitamins.TotalVitamin)` mcg with a median of `r median(ingredients$Data.Vitamins.TotalVitamin)` mcg. There are many more ingredients with low vitamin content than with high vitamin content.
 
 ```{r}
 make_hist('Data.Vitamins.TotalVitamin', '#ae45ba', 'Distribution of total vitamin content', 'Total Vitamin (mcg)')
 ```
 
-The graph below shows five box plots, each for one of the 5 broad categories (some outliers were left out of the visualization). Fruits, vegetables, and other plant products tend to have the highest vitamin content (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Fruits/Vegetables/Plants'])` mcg) while meat products have the lowest (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Meat'])` mcg).
+The graph below shows five box plots, each for one of the 5 broad categories (some outliers were excluded from the visualization). Fruits, vegetables, and other plant products tend to have the highest vitamin content (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Fruits/Vegetables/Plants'])` mcg) while meat products have the lowest (median: `r median(ingredients$Data.Vitamins.TotalVitamin[ingredients$Category.Broad == 'Meat'])` mcg). Therefore, fruits and vegetables are necessary for a high vitamin diet.
 
 ```{r}
 ggplot(ingredients) +
@@ -210,15 +218,31 @@ ggplot(ingredients) +
 
 While vitamins are organic, and minerals are inorganic @vitamins_and_minerals, investigating the correlations in the amounts that appear in ingredients can provide explanations to why some foods are better than others for specific tasks. Vitamin B12 and Vitamin B6 were the vitamins explored, and copper and zinc were the minerals examined.
 
+### Minerals
+
+The minerals examined in this analysis are copper and zinc.
+
+The distribution of copper is unimodal and skewed right, with many outliers on the greater side. Its values range from `r min(ingredients$Data.MajorMinerals.Copper)` mg to `r max(ingredients$Data.MajorMinerals.Copper)` mg with a median of `r median(ingredients$Data.MajorMinerals.Copper)` mg. Most of the ingredients have low copper compared to the large range of values.
+
+```{r}
+make_hist('Data.MajorMinerals.Copper', '#c37f12', 'Distribution of copper', 'Copper (mg)')
+```
+
+The data for zinc is similar to that of copper in that it is unimodal and skewed right, again with many outliers on the right. The values range from `r min(ingredients$Data.MajorMinerals.Zinc)` mg to `r max(ingredients$Data.MajorMinerals.Zinc)` mg with a median of `r median(ingredients$Data.MajorMinerals.Zinc)` mg. Like many of the other variables seen, many ingredients have low zinc content while few have high zinc content.
+
+```{r}
+make_hist('Data.MajorMinerals.Zinc', '#9c9c9c', 'Distribution of zinc', 'Zinc (mg)')
+```
+
 ### Vitamin B12
 
-The distribution of Vitamin B12 in this data set is unimodal and skewed right, with no outliers on the lower side and many on the greater side. The values range from `r min(ingredients$Data.Vitamins.VitaminB12)` mcg to `r max(ingredients$Data.Vitamins.VitaminB12)` mcg with a median of `r median(ingredients$Data.Vitamins.VitaminB12)` mcg.
+The distribution of Vitamin B12 in this data set has the same general shape as those of copper and zinc—unimodal and skewed right, with no outliers on the lower side and many on the greater side. The values range from `r min(ingredients$Data.Vitamins.VitaminB12)` mcg to `r max(ingredients$Data.Vitamins.VitaminB12)` mcg with a median of `r median(ingredients$Data.Vitamins.VitaminB12)` mcg. Many food items have low amounts of Vitamin B12 compared to the few that have high concentrations.
 
 ```{r}
 make_hist('Data.Vitamins.VitaminB12', '#c94f47', 'Distribution of Vitamin B12', 'Vitamin B12 (mcg)')
 ```
 
-Interesting comparisions can be made when splitting this distribution. When the data is split into groups of Vitamin B12 and displayed by broad category, it can be seen that plants and miscellaneous ingredients are very significant in the "Less than 1" section but almost nonexistent in the others. This reveals the possibility that dairy and meat products have more Vitamin B12 than plant products.
+Interesting comparisons can be made when splitting this distribution. When the data is split into groups of Vitamin B12 and displayed by broad category, it can be seen that plants and miscellaneous ingredients are very significant in the "Less than 1" section but almost nonexistent in the others while meat ingredients have prevalence in all groups. This reveals the possibility that dairy and meat products have more Vitamin B12 than plant products. In order to have a plentiful source of Vitamin B12, animal products are efficient options @vitamin_b12.
 
 ```{r}
 ggplot(ingredients) +
@@ -229,7 +253,7 @@ ggplot(ingredients) +
     ) +
     scale_fill_brewer(palette='Set3') +
     labs(
-        title='[title]',
+        title='Groups of Vitamin B12 split by broad food category',
         x='Vitamin B12 Group',
         y='Frequency',
         fill='Broad Category'
@@ -237,23 +261,9 @@ ggplot(ingredients) +
     theme_bw()
 ```
 
-The distribution of copper looks like that of Vitamin B12—unimodal and skewed right, with many outliers on the greater side. Its values range from `r min(ingredients$Data.MajorMinerals.Copper)` mg to `r max(ingredients$Data.MajorMinerals.Copper)` mg with a median of `r median(ingredients$Data.MajorMinerals.Copper)` mg.
+Vitamin B12 was found to have a strong, positive, correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB12)`) and a weak, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB12)`). This means that foods with high amounts copper or zinc tend to have high amounts of Vitamin B12, and foods with low quantities of those minerals often have low quantities of Vitamin B12.
 
-```{r}
-make_hist('Data.MajorMinerals.Copper', '#c37f12', 'Distribution of copper', 'Copper (mg)')
-```
-
-The data for zinc is similar to that of Vitamin B12 and copper in that it is unimodal and skewed right, again with many outliers on the right. The values range from `r min(ingredients$Data.MajorMinerals.Zinc)` mg to `r max(ingredients$Data.MajorMinerals.Zinc)` mg with a median of `r median(ingredients$Data.MajorMinerals.Zinc)` mg.
-
-```{r}
-make_hist('Data.MajorMinerals.Zinc', '#9c9c9c', 'Distribution of zinc', 'Zinc (mg)')
-```
-
-Vitamin B12 was found to have a strong, positive, correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB12)`) and a weak, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB12)`).
-
-Note: the relationships may be difficult to see in the scatter plots below.
-
-```{r}
+```{r fig.width=8, fig.height=4}
 b12_vs_copper <- make_scatter('Data.MajorMinerals.Copper', 'Data.Vitamins.VitaminB12', 'Vitamin B12 vs. copper', 'Copper (mg)', 'Vitamin B12 (mcg)')
 
 b12_vs_zinc <- make_scatter('Data.MajorMinerals.Zinc', 'Data.Vitamins.VitaminB12', 'Vitamin B12 vs. zinc', 'Zinc (mg)')
@@ -263,15 +273,15 @@ grid.arrange(b12_vs_copper, b12_vs_zinc, nrow=1, ncol=2)
 
 ### Vitamin B6
 
-Like Vitamin B12, Vitamin B6 has a distribution that is unimodal and skewed right, with many outliers on the right side. This data ranges from `r min(ingredients$Data.Vitamins.VitaminB6)` mg to `r max(ingredients$Data.Vitamins.VitaminB6)` mg, and its median is `r median(ingredients$Data.Vitamins.VitaminB6)` mg.
+Like Vitamin B12, Vitamin B6 has a distribution that is unimodal and skewed right, with many outliers on the right side. This data ranges from `r min(ingredients$Data.Vitamins.VitaminB6)` mg to `r max(ingredients$Data.Vitamins.VitaminB6)` mg, and its median is `r median(ingredients$Data.Vitamins.VitaminB6)` mg. Most of the data has "low" Vitamin B6, but there are some outliers that greatly increase the range.
 
 ```{r}
 make_hist('Data.Vitamins.VitaminB6', title='Distribution of Vitamin B6', xlab='Vitamin B6 (mg)')
 ```
 
-Unlike Vitamin B12, Vitamin B6 has a very weak, positive correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB6)`) and a moderate, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB6)`).
+Unlike Vitamin B12, Vitamin B6 has a very weak, positive correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB6)`) and a moderate, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB6)`). This implies that copper content in an ingredient does not generally affect the amount of Vitamin B6. However, high concentrations of zinc often are associated with high levels of Vitamin B6.
 
-```{r}
+```{r fig.width=8, fig.height=4}
 b6_vs_copper <- make_scatter('Data.MajorMinerals.Copper', 'Data.Vitamins.VitaminB6', 'Vitamin B6 vs. copper', 'Copper (mg)', 'Vitamin B6 (mg)')
 
 b6_vs_zinc <- make_scatter('Data.MajorMinerals.Zinc', 'Data.Vitamins.VitaminB6', 'Vitamin B6 vs. zinc', 'Zinc (mg)')
@@ -283,7 +293,7 @@ grid.arrange(b6_vs_copper, b6_vs_zinc, nrow=1, ncol=2)
 
 Water content is another significant factor to consider as food types will have varying levels of water. The human body is also made up of about 60% water @water, so finding what ingredients have high water can be useful in replenishing thirst in the form of food.
 
-The distribution of water looks different than many of the other variables of interest because it is bimodal. It ranges from `r min(ingredients$Data.Water)` g to `r max(ingredients$Data.Water)` g and has a median of `r median(ingredients$Data.Water)` g.
+The distribution of water looks different than many of the other variables of interest because it is bimodal. It ranges from `r min(ingredients$Data.Water)` g to `r max(ingredients$Data.Water)` g and has a median of `r median(ingredients$Data.Water)` g. These two peaks indicate that many ingredients have very low and very high water composition, but less have amounts in the middle of the distribution.
 
 ```{r}
 make_hist('Data.Water', '#9ed8f0', 'Distribution of water', 'Water (g)')
@@ -291,33 +301,33 @@ make_hist('Data.Water', '#9ed8f0', 'Distribution of water', 'Water (g)')
 
 ### Water vs. Lipids
 
-Looking at the fat content of an ingredient could give insight to its water content. The distribution of total lipid content, like most of the other variables, is unimodal and skewed right, but it is less skewed than those graphs. It has a minimum of `r min(ingredients$Data.Fat.TotalLipid)` g and a maximum of `r max(ingredients$Data.Fat.TotalLipid)` g with a median of `r median(ingredients$Data.Fat.TotalLipid)` g.
+Looking at the fat content of an ingredient could give insight to its water content. The distribution of total lipid content, like most of the other variables, is unimodal and skewed right, but it is less skewed than those graphs. It has a minimum of `r min(ingredients$Data.Fat.TotalLipid)` g and a maximum of `r max(ingredients$Data.Fat.TotalLipid)` g with a median of `r median(ingredients$Data.Fat.TotalLipid)` g. More ingredients have low total lipid amount than high amounts.
 
 ```{r}
 make_hist('Data.Fat.TotalLipid', '#e8c433', 'Distribution of total lipid', 'Total Lipid (g)')
 ```
 
-A moderate, negative correlation between total lipid content and water was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Water)`). As fat content increases, water content decreases.
+A moderate, negative correlation between total lipid content and water was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Water)`). Foods with high quantities of total lipids generally have lower water content than those with low quantities of total lipids.
 
 ```{r}
-make_scatter('Data.Fat.TotalLipid', 'Data.Water', 'Water vs. total lipid content', 'Total Lipid (g)', 'Water (g)')
+make_scatter('Data.Fat.TotalLipid', 'Data.Water', 'Water vs. total lipid content', 'Total Lipid (g)', 'Water (g)', c(0, 100))
 ```
 
 ### Water vs. Fiber
 
-Fiber is the other predictor that was investigated in relation to the water content. Its distribution is similar to that of total lipid content, but it ranges from `r min(ingredients$Data.Fiber)` g to `r max(ingredients$Data.Fiber)` g and has a median of `r median(ingredients$Data.Fiber)` g.
+Fiber is the other predictor that was investigated in relation to the water content. Its distribution is similar to that of total lipid content, but it ranges from `r min(ingredients$Data.Fiber)` g to `r max(ingredients$Data.Fiber)` g and has a median of `r median(ingredients$Data.Fiber)` g. The data is concentrated on the lower side of the distribution, so there are more ingredients with low fiber than with high fiber.
 
 ```{r}
 make_hist('Data.Fiber', '#7a5225', 'Distribution of fiber', 'Fiber (g)')
 ```
 
-Fiber was found to have a moderate, negative correlation with water content (`r cor(x=ingredients$Data.Fiber, y=ingredients$Data.Water)`). As fiber increases, water decreases.
+Fiber was found to have a moderate, negative correlation with water content (`r cor(x=ingredients$Data.Fiber, y=ingredients$Data.Water)`). This reveals that ingredients abundant with fiber tend to have low quantities of water whilst those that don't have much fiber usually contain high water amounts.
 
 ```{r}
-make_scatter('Data.Fiber', 'Data.Water', 'Water vs. fiber', 'Fiber (g)', 'Water (g)')
+make_scatter('Data.Fiber', 'Data.Water', 'Water vs. fiber', 'Fiber (g)', 'Water (g)', c(0, 100))
 ```
 
-Since the correlation of water and total fat are in the same direction as and similar magnitude to that of water and fiber, total fat as a function of fiber was also analyzed. However, no correlation was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Fiber)`).
+Since the correlation of water and total fat are in the same direction as and similar magnitude to that of water and fiber, total fat as a function of fiber was also analyzed. However, no correlation was found (`r cor(x=ingredients$Data.Fat.TotalLipid, y=ingredients$Data.Fiber)`). Hence, the total lipid content does not influence the fiber in a food item, and vice versa.
 
 ```{r}
 make_scatter('Data.Fiber', 'Data.Fat.TotalLipid', 'Total lipid vs. fiber', 'Total Lipid (g)', 'Fiber (g)')
@@ -325,7 +335,11 @@ make_scatter('Data.Fiber', 'Data.Fat.TotalLipid', 'Total lipid vs. fiber', 'Tota
 
 # Debugging
 
+The debugging for this project was nothing complex. When an error or incorrect output was encountered, the code was reviewed. If the issue still persisted, it would be searched on Google or fixed using print statements. Processing the data created many more issues than visualizing it did, especially when creating the new columns. Specifically, when the code-writing process first started, the working directory was not set to the correct location, which needed to be resolved in order to read the data into R. Additionally, some labels were missed when manually categorizing `Category` into `Category.Broad`, and looking through the 2000+ ingredients would not be efficient. Thus, an if statement was placed within the loop that labeled the data to collect any missing values. Then, these missing labels were added to the CSV file storing the others. Issues with graphs were solved by using Google, which led to Stack Overflow.
+
 # Conclusion
+
+Much of the effort was concentrated in data processing, which is one of the most important steps in the analytic process. However, the visualizations give an intuitive interpretation of the numbers, so this is also crucial. There were many outliers in this ingredients data set, but relationships between variables were still able to be found. Firstly, fruits and vegetables tend to have higher total vitamin content than meat and dairy products. Secondly, high quantities of copper in ingredients are associated with high quantities of Vitamin B12, and high levels of zinc are related to high levels of both Vitamin B12 and Vitamin B6. Lastly, high total lipid and fiber content are both correlated with low water content (independently from each other). This information can be used to efficiently construct diets for various purposes because knowing which types of ingredients one's targeted nutrients are prevalent in will allow accurate predictions of results.
 
 # References
 

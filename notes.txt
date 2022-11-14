@@ -4,7 +4,6 @@ data processing
 - remove vitamin d (last observation)
 - rename columns to not have spaces (easier to handle)
 - create broad categories
-	-- there are two infant formula categories
 
 purpose
 - investigate relationships between amounts of various nutrients
@@ -45,12 +44,10 @@ checklist
 - make graph titles enticing
 - careful with text output in report
 - past tense
-- put min, max, median into table b/c the distributions look similar
 - look for consistency
-- implications of plots
 - make sure axis labels are correct, variables are on the correct axes
-- describe where functions are
+- describe where functions, ifs, and loops are
 - no unwanted text overlap
-- check bins of histograms
 - check figure output size
-- change figure width and height for the double scatter plots
+- add comments
+- check capitalization in references (all sections)
