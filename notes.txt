@@ -51,3 +51,4 @@ checklist
 - check figure output size
 - add comments
 - check capitalization in references (all sections)
+- careful about unsupported speculation
