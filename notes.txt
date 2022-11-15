@@ -52,3 +52,4 @@ checklist
 - add comments
 - check capitalization in references (all sections)
 - careful about unsupported speculation
+- spell/grammar check
