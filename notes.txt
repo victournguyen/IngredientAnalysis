@@ -41,15 +41,4 @@ debug
 - reading console error when making graphs
 
 checklist
-- make graph titles enticing
-- careful with text output in report
-- past tense
-- look for consistency
-- make sure axis labels are correct, variables are on the correct axes
-- describe where functions, ifs, and loops are
-- no unwanted text overlap
-- check figure output size
-- add comments
-- check capitalization in references (all sections)
-- careful about unsupported speculation
-- spell/grammar check
+- 
