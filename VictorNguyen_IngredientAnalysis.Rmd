@@ -1,7 +1,7 @@
 ---
 title: "Ingredient Analysis"
 author: "Victor Nguyen"
-date: "2022 November 7 - 2022 November "
+date: "November 7, 2022 - November 17, 2022"
 output:
     pdf_document:
         toc: true
@@ -216,7 +216,7 @@ ggplot(ingredients) +
 
 ## Vitamins in Relation to Minerals
 
-While vitamins are organic, and minerals are inorganic @vitamins_and_minerals, investigating the correlations in the amounts that appear in ingredients can provide explanations to why some foods are better than others for specific tasks. Vitamin B12 and Vitamin B6 were the vitamins explored, and copper and zinc were the minerals examined.
+While vitamins are organic, and minerals are inorganic @vitamins_and_minerals, investigating the correlations in the amounts that appear in ingredients can provide explanations as to why some foods are better than others for specific tasks. Vitamin B12 and Vitamin B6 were the vitamins explored, and copper and zinc were the minerals examined.
 
 ### Minerals
 
@@ -242,7 +242,7 @@ The distribution of Vitamin B12 in this data set has the same general shape as t
 make_hist('Data.Vitamins.VitaminB12', '#c94f47', 'Distribution of Vitamin B12', 'Vitamin B12 (mcg)')
 ```
 
-Interesting comparisons can be made when splitting this distribution. When the data is split into groups of Vitamin B12 and displayed by broad category, it can be seen that plants and miscellaneous ingredients are very significant in the "Less than 1" section but almost nonexistent in the others while meat ingredients have prevalence in all groups. This reveals the possibility that dairy and meat products have more Vitamin B12 than plant products. Animal products are efficient options for having plentiful sources of Vitamin B12 @vitamin_b12.
+Interesting comparisons can be made when splitting this distribution. When the data is split into groups of Vitamin B12 and displayed by broad category, it can be seen that plants and miscellaneous ingredients are very significant in the "Less than 1" section but almost nonexistent in the others while meat ingredients have a prevalence in all groups. This reveals the possibility that dairy and meat products have more Vitamin B12 than plant products. Animal products are efficient options for having plentiful sources of Vitamin B12 @vitamin_b12.
 
 ```{r}
 ggplot(ingredients) +
@@ -261,7 +261,7 @@ ggplot(ingredients) +
     theme_bw()
 ```
 
-Vitamin B12 was found to have a strong, positive, correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB12)`) and a weak, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB12)`). This means that foods with high amounts copper or zinc tend to have high amounts of Vitamin B12, and foods with low quantities of those minerals often have low quantities of Vitamin B12.
+Vitamin B12 was found to have a strong, positive, correlation with copper (`r cor(x=ingredients$Data.MajorMinerals.Copper, y=ingredients$Data.Vitamins.VitaminB12)`) and a weak, positive correlation with zinc (`r cor(x=ingredients$Data.MajorMinerals.Zinc, y=ingredients$Data.Vitamins.VitaminB12)`). This means that foods with high amounts of copper or zinc tend to have high amounts of Vitamin B12, and foods with low quantities of those minerals often have low quantities of Vitamin B12.
 
 ```{r fig.width=8, fig.height=4}
 b12_vs_copper <- make_scatter('Data.MajorMinerals.Copper', 'Data.Vitamins.VitaminB12', 'Vitamin B12 vs. copper', 'Copper (mg)', 'Vitamin B12 (mcg)')
@@ -293,7 +293,7 @@ grid.arrange(b6_vs_copper, b6_vs_zinc, nrow=1, ncol=2)
 
 Water content is another significant factor to consider as food types will have varying levels of water. The human body is also made up of about 60% water @water, so finding what ingredients have high water can be useful in replenishing thirst in the form of food.
 
-The distribution of water looks different than many of the other variables of interest because it is bimodal. It ranges from `r min(ingredients$Data.Water)` g to `r max(ingredients$Data.Water)` g and has a median of `r median(ingredients$Data.Water)` g. These two peaks indicate that many ingredients (in the data) have very low and very high water composition, but less have amounts in the middle of the distribution.
+The distribution of water looks different than many of the other variables of interest because it is bimodal. It ranges from `r min(ingredients$Data.Water)` g to `r max(ingredients$Data.Water)` g and has a median of `r median(ingredients$Data.Water)` g. These two peaks indicate that many ingredients (in the data) have very low and very high water composition, but fewer have amounts in the middle of the distribution.
 
 ```{r}
 make_hist('Data.Water', '#9ed8f0', 'Distribution of water', 'Water (g)')
@@ -301,7 +301,7 @@ make_hist('Data.Water', '#9ed8f0', 'Distribution of water', 'Water (g)')
 
 ### Water vs. Lipids
 
-Looking at the fat content of an ingredient could give insight to its water content. The distribution of total lipid content, like most of the other variables, is unimodal and skewed right, but it is less skewed than those graphs. It has a minimum of `r min(ingredients$Data.Fat.TotalLipid)` g and a maximum of `r max(ingredients$Data.Fat.TotalLipid)` g with a median of `r median(ingredients$Data.Fat.TotalLipid)` g. More ingredients (in the data) have low total lipid amount than high amounts.
+Looking at the fat content of an ingredient could give insight into its water content. The distribution of total lipid content, like most of the other variables, is unimodal and skewed right, but it is less skewed than those graphs. It has a minimum of `r min(ingredients$Data.Fat.TotalLipid)` g and a maximum of `r max(ingredients$Data.Fat.TotalLipid)` g with a median of `r median(ingredients$Data.Fat.TotalLipid)` g. More ingredients (in the data) have low total lipid amounts than high amounts.
 
 ```{r}
 make_hist('Data.Fat.TotalLipid', '#e8c433', 'Distribution of total lipid', 'Total Lipid (g)')
