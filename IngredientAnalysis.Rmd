@@ -375,6 +375,8 @@ The debugging for this project was nothing complex. When an error or incorrect o
 
 Much of the effort was concentrated in data processing, which is one of the most important steps in the analytic process. However, the visualizations give an intuitive interpretation of the numbers, so this is also crucial. There were many outliers in this ingredients data set, but relationships between variables were still able to be found. Firstly, fruits and vegetables tend to have higher total vitamin content than meat and dairy products. Secondly, high quantities of copper in ingredients are associated with high quantities of Vitamin B12, and high levels of zinc are related to high levels of both Vitamin B12 and Vitamin B6. Lastly, high total lipid and fiber content are both correlated with low water content (independently from each other). This information can be used to efficiently construct diets for various purposes because knowing which types of ingredients one's targeted nutrients are prevalent in will allow accurate predictions of results. Future research could hopefully prove causations for the correlations discovered in this analysis or find more complex, multivariate relationships between nutrients.
 
+The source code for this report can be accessed on [GitHub](https://github.com/victournguyen/IngredientAnalysis) ([https://github.com/victournguyen/IngredientAnalysis](https://github.com/victournguyen/IngredientAnalysis)).
+
 # References
 
 \vspace{6.5pt}
